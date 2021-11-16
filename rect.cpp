@@ -137,16 +137,16 @@ void Rect::changeHeight(double delta) {
 }
 
 // TODO: Implement this method
-bool Rect::isOverlapping(const Rect &r) const {
+bool Rect::isOverlapping(const Shape &s) const {
     // There are only two cases when rectangles are *not* overlapping:
     // 1. when one is to the left of the other
 
-    if ((r.getBottomY() > this->getTopY() && r.getTopY() < this->getBottomY() &&
-    r.getRightX() > this->getLeftX() && r.getLeftX() < this->getRightX())) {
+    if ((s.getBottomY() > this->getTopY() && s.getTopY() < this->getBottomY() &&
+    s.getRightX() > this->getLeftX() && s.getLeftX() < this->getRightX())) {
         return true;
     }
     // 2. when one is above the other
-    return false; // placeholder value for compilation
+    return false;
 }
 
 // TODO: Implement this method

@@ -44,6 +44,7 @@ public:
     /* Draw */
     void draw() const override;
 
+    bool isOverlapping(const Shape &s) const override;
 };
 
 #endif //GRAPHICSEXAMPLES_CIRCLE_H

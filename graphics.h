@@ -18,7 +18,7 @@
 // Program initialization NOT OpenGL/GLUT dependent,
 // as we haven't created a GLUT window yet
 void initClouds();
-void initGrass();
+void initBackground();
 void initBuildings();
 void initUser();
 void init();

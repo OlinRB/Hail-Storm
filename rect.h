@@ -61,7 +61,7 @@ public:
     void changeHeight(double delta);
 
     /* Check if two Rect objects are overlapping */
-    bool isOverlapping(const Rect &r) const;
+    bool isOverlapping(const Shape &s) const override;
 
     /* Draw */
     void draw() const override;

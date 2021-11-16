@@ -21,99 +21,74 @@ const color cyan (0, 1, 1);
 
 vector<unique_ptr<Shape>> clouds;
 Rect grass;
+int clickX, clickY;
 vector<Rect> buildings1;
 vector<Rect> buildings2;
 vector<Rect> buildings3;
+vector<Circle> targets;
+vector<Circle> targetsTemp;
+vector<unique_ptr<Shape>> targetsPtr;
 Rect user;
 
 void initClouds() {
     // Note: the Rect objects that make up the flat bottom of the clouds
     // won't appear until you implement the Rect::draw method.
-    clouds.clear();
-    dimensions cloudBottom(30, 30);
-    // First cloud
-    clouds.push_back(make_unique<Circle>(white, 300, 100, 20));
-    clouds.push_back(make_unique<Circle>(white, 330, 100, 20));
-    clouds.push_back(make_unique<Circle>(white, 320, 90, 20));
-    clouds.push_back(make_unique<Rect>(white, 315, 105, cloudBottom));
-    // Second cloud
-    clouds.push_back(make_unique<Circle>(white, 100, 80, 20));
-    clouds.push_back(make_unique<Circle>(white, 130, 80, 20));
-    clouds.push_back(make_unique<Circle>(white, 120, 70, 20));
-    clouds.push_back(make_unique<Rect>(white, 115, 85, cloudBottom));
-    // Third cloud
-    clouds.push_back(make_unique<Circle>(white, 450, 50, 20));
-    clouds.push_back(make_unique<Circle>(white, 480, 50, 20));
-    clouds.push_back(make_unique<Circle>(white, 470, 40, 20));
-    clouds.push_back(make_unique<Rect>(white, 465, 55, cloudBottom));
+//    clouds.clear();
+//    dimensions cloudBottom(30, 30);
+//    // First cloud
+//    clouds.push_back(make_unique<Circle>(white, 300, 100, 20));
+//    clouds.push_back(make_unique<Circle>(white, 330, 100, 20));
+//    clouds.push_back(make_unique<Circle>(white, 320, 90, 20));
+//    clouds.push_back(make_unique<Rect>(white, 315, 105, cloudBottom));
+//    // Second cloud
+//    clouds.push_back(make_unique<Circle>(white, 100, 80, 20));
+//    clouds.push_back(make_unique<Circle>(white, 130, 80, 20));
+//    clouds.push_back(make_unique<Circle>(white, 120, 70, 20));
+//    clouds.push_back(make_unique<Rect>(white, 115, 85, cloudBottom));
+//    // Third cloud
+//    clouds.push_back(make_unique<Circle>(white, 450, 50, 20));
+//    clouds.push_back(make_unique<Circle>(white, 480, 50, 20));
+//    clouds.push_back(make_unique<Circle>(white, 470, 40, 20));
+//    clouds.push_back(make_unique<Rect>(white, 465, 55, cloudBottom));
 
 }
 
-void initGrass() {
+void initBackground() {
     grass.setCenter(250, 450);
     grass.setSize(width, height/3);
     grass.setColor(grassGreen);
 }
 
-void initBuildings() {
-    // First vector is for closest buildings
-    int totalBuildingWidth = 0;
-    dimensions buildingSize;
-    while (totalBuildingWidth < width + 50) {
-        // Building height between 50-100
-        buildingSize.height = rand() % 51 + 50;
-        // Building width between 30-50
-        buildingSize.width = rand() % 21 + 30;
-        buildings1.push_back(Rect(brickRed,
-                totalBuildingWidth+(buildingSize.width/2)+5,
-                height-((buildingSize.height/2)+50),
-                buildingSize));
-        totalBuildingWidth += buildingSize.width + 5;
+void initTargets() {
+    for (int i = 0; i < 5; ++i) {
+        targets.push_back(Circle(white, rand() % 400, rand() % 101+50, rand() % 15 + 5));
     }
-    totalBuildingWidth = 0;
-    // TODO: Populate this vector of darkBlue buildings
-    while (totalBuildingWidth < width + 100) {
-        // Building height between 50-100
-        buildingSize.height = rand() % 101 + 100;
-        // Building width between 30-50
-        buildingSize.width = rand() % 51 + 50;
-        buildings2.push_back(Rect(darkBlue,
-                                  totalBuildingWidth+(buildingSize.width/2)+5,
-                                  height-((buildingSize.height/2)+50),
-                                  buildingSize));
-        totalBuildingWidth += buildingSize.width + 5;
+    for (int i = 0; i < 5; ++i) {
+        targetsPtr.push_back(make_unique<Circle>(white, rand() % 400, rand() % 400, rand() % 30 + 15));
     }
-    // TODO: Populate this vector of purple buildings
-    totalBuildingWidth = 0;
-    while (totalBuildingWidth < width + 200) {
-        // Building height between 50-100
-        buildingSize.height = rand() % 201 + 200;
-        // Building width between 30-50
-        buildingSize.width = rand() % 101 + 100;
-        buildings3.push_back(Rect(purple,
-                                  totalBuildingWidth+(buildingSize.width/2)+5,
-                                  height-((buildingSize.height/2)+50),
-                                  buildingSize));
-        totalBuildingWidth += buildingSize.width + 5;
-    }
+
 }
 
+void initBuildings() {
+}
 void initUser() {
     // TODO: Initialize the user to be a 20x20 white block
     // centered in the top left corner of the graphics window
-    user.setSize(20,20);
-    user.setColor(1,1,1,1);
+    user.setSize(5,5);
+    user.setColor(0,0,0,1);
     user.setCenter(0,0);
 }
 
 void init() {
     width = 500;
     height = 500;
+    clickX = clickY = 0;
     srand(time(0));
     initClouds();
-    initGrass();
+    initBackground();
     initBuildings();
     initUser();
+    initTargets();
 }
 
 /* Initialize OpenGL Graphics */
@@ -138,19 +113,6 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT); // DO NOT CHANGE THIS LINE
     
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // DO NOT CHANGE THIS LINE
-    
-    /*
-     * Draw here
-     */
-
-    // TODO: Add logic to draw the grass, the user, and the
-    // rest of the buildings. Note that the order of drawing
-    // matters because whatever is drawn last appears on top.
-    // Note that darkBlue buildings turn cyan when overlapping
-    // with the user, and purple buildings turn magenta.
-
-    // Draw user
-    user.draw();
 
 
     // Draw grass
@@ -164,60 +126,84 @@ void display() {
 
     glEnd();
 
-    for (unique_ptr<Shape> &s : clouds) {
-        // #polymorphism
-        s->draw();
+    for (Circle &target : targets) {
+        target.draw();
     }
-    for (Shape &building : buildings3) {
-        building.draw();
-    }
-    for (Shape &building : buildings2) {
-        building.draw();
-    }
-    for (Shape &building : buildings1) {
-        building.draw();
-    }
+//    for (unique_ptr<Shape> &t : targetsPtr) {
+//        t->draw();
+//    }
 
+//    for (int i = 0; i < targetsPtr.size(); ++i) {
+//        if (targetsPtr.size() == 0) {
+//            break;
+//        }
+//        if (targetsPtr[i]->isOverlapping(user)) {
+//            targetsPtr[i]->setColor(darkBlue);
+//            //targetsPtr.erase(targetsPtr.begin()+i);
+//        }
+//        else {
+//            targetsPtr[i]->setColor(brickRed);
+//        }
+//        targetsPtr[i]->draw();
+//    }
 
-    for (Rect &p : buildings3) {
-        if (p.isOverlapping(user)) {
-            p.setColor(magenta);
-        } else {
-            p.setColor(purple);
+    for (Circle &s : targets) {
+        if (s.isOverlapping(user)) {
+            s.setColor(darkBlue);
         }
-        p.draw();
-    }
-    for (Rect &b : buildings2) {
-        if (b.isOverlapping(user)) {
-            b.setColor(cyan);
-        } else {
-            b.setColor(darkBlue);
+        else {
+            s.setColor(brickRed);
         }
-        b.draw();
+        s.draw();
     }
 
-    for (Rect &r : buildings1) {
-        if (r.isOverlapping(user)) {
-            r.setColor(orange);
-        } else {
-            r.setColor(brickRed);
+//    targetsTemp.clear();
+    if (targets.size() > 0) {
+        int iterator = targets.size();
+        for (int i = 0; i < iterator; ++i) {
+            if (targets[i].isOverlapping(user)) {
+                targets[i].setColor(brickRed);
+                if ((clickX > targets[i].getLeftX() && clickX < targets[i].getRightX() &&
+                clickY > targets[i].getTopY() && clickY < targets[i].getBottomY())) {
+                    targets.erase(targets.begin() + i);
+                    if (targets.size() == 0)
+                        break;
+                    targets.push_back(Circle(white, rand() % 400, rand() % 101 + 50, rand() % 15 + 5));
+                    --iterator;
+                }
+            } else {
+                targets[i].setColor(white);
+            }
+            targets[i].draw();
         }
-        r.draw();
     }
-
     // Draw user
     user.draw();
 
 
     // Check if the user is overlapping with the cloud
     // Only check the Rect object within the cloud
-    for (int i = 3; i < clouds.size(); i += 4) {
-        if (dynamic_cast<Rect&>(*clouds[i]).isOverlapping(user)){
-            glutDestroyWindow(wd);
+    for (int i = 0; i < targets.size(); ++i) {
+        if (dynamic_cast<Shape&>(targets[i]).isOverlapping(grass)){
+            string message = "GAME OVER";
+            glColor3f(0, 0, 0);
+            glRasterPos2i(150, 150);
+            cout << "Yes" << endl;
+            for (char letter : message) {
+                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
+            }
+            //_sleep(5000);
+            glutDestroyWindow(wd); // put in timer
             exit(0);
         }
     }
-    
+
+//    string message = "GAME OVER";
+//    glColor3f(1, 0, 0);
+//    glRasterPos2i(150, 150);
+//    for (char letter : message) {
+//        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
+//    }
     glFlush();  // Render now
 }
 
@@ -262,24 +248,24 @@ void cursor(int x, int y) {
 // button will be GLUT_LEFT_BUTTON or GLUT_RIGHT_BUTTON
 // state will be GLUT_UP or GLUT_DOWN
 void mouse(int button, int state, int x, int y) {
-
+    clickX = x;
+    clickY = y;
     glutPostRedisplay();
 }
 
-void cloudTimer(int dummy) {
 
-    for (unique_ptr<Shape> &s : clouds) {
-        // Move all the clouds to the left
-        s->moveX(-1);
-        // If a shape has moved off the screen
-        if (s->getCenterX() < -20) {
-            // Set it to the right of the screen so that it passes through again
-            s->setCenterX(520);
-        }
+void targetTimer(int dummy) {
+
+//    for (unique_ptr<Shape> &s : targetsPtr) {
+//
+//    }
+    for (Circle &s : targets) {
+        s.setCenterY(s.getCenterY() + 1);
     }
+
     
     glutPostRedisplay();
-    glutTimerFunc(50, cloudTimer, dummy);
+    glutTimerFunc(50, targetTimer, dummy);
 }
 
 void buildingTimer(int dummy) {
@@ -334,7 +320,7 @@ int main(int argc, char** argv) {
     glutInitWindowSize((int)width, (int)height);
     glutInitWindowPosition(100, 200); // Position the window's initial top-left corner
     /* create the window and store the handle to it */
-    wd = glutCreateWindow("Runner" /* title */ );
+    wd = glutCreateWindow("HAIL STORM" /* title */ );
     
     // Register callback handler for window re-paint event
     glutDisplayFunc(display);
@@ -356,7 +342,7 @@ int main(int argc, char** argv) {
     glutMouseFunc(mouse);
     
     // handles timer
-    glutTimerFunc(0, cloudTimer, 0);
+    glutTimerFunc(0, targetTimer, 0);
     glutTimerFunc(0, buildingTimer, 0);
     
     // Enter the event-processing loop

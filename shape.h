@@ -82,6 +82,8 @@ public:
     virtual void moveX(double deltaX);
     virtual void moveY(double deltaY);
 
+    virtual bool isOverlapping(const Shape &s) const = 0;
+
     virtual void draw() const = 0;
 };
 

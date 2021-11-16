@@ -95,6 +95,15 @@ void Circle::changeRadius(double delta) {
     setRadius(radius + delta);
 }
 
+bool Circle::isOverlapping(const Shape &s) const {
+    if ((s.getBottomY() > this->getTopY() && s.getTopY() < this->getBottomY() &&
+         s.getRightX() > this->getLeftX() && s.getLeftX() < this->getRightX())) {
+        return true;
+    }
+    // 2. when one is above the other
+    return false;
+}
+
 void Circle::draw() const {
     // Set drawing color to fill color
     glColor3f(fill.red, fill.green, fill.blue);
