@@ -28,11 +28,13 @@ int endCnt = 0;
 int moveCar = 0;
 int carTimer = 0;
 int clickX, clickY;
+int level = 1;
 vector<Rect> buildings1;
 vector<Rect> buildings2;
 vector<Rect> buildings3;
 vector<Circle> targets;
 vector<int> carXpos;
+vector<int> levels{2,3,4,5};
 
 vector<unique_ptr<Shape>> targetsPtr;
 Rect user;
@@ -276,20 +278,22 @@ void display() {
             }
         }
 
-
-//        // D3: What does this code do? What will it look like? Where will it be?
-//        string message = "You clicked the mouse at coordinate (" + to_string(clickX) + ", " + to_string(clickY) + ")";
-//        glColor3f(1, 1, 1);
-//        glRasterPos2i(0, height);
-//        for (char letter : message) {
-//            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
-//        }
-
         string message = "You have caught " + to_string(hailCaught) + " pieces of hail!";
+        glColor3f(0, 0, 0);
+        glRasterPos2i(0, 10);
+        for (char letter : message) {
+            glutBitmapCharacter(GLUT_BITMAP_8_BY_13, letter);
+        }
+//        if (hailCaught != 0 && hailCaught % 25 == 0) {
+//            level = levels[0];
+//            levels.erase(levels.begin());
+//
+//        }
+        message = "LEVEL:  " + to_string(level);
         glColor3f(0, 0, 0);
         glRasterPos2i(0, height);
         for (char letter : message) {
-            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, letter);
+            glutBitmapCharacter(GLUT_BITMAP_9_BY_15, letter);
         }
     }
 
