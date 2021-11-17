@@ -63,8 +63,13 @@ Triang::Triang(double red, double green, double blue, double alpha, double x, do
     setSize(size);
 }
 
-Triang::Triang(color fill, double x, double y, dimensions1 size) : Shape(fill, x, y) {
+Triang::Triang(color fill, double x, double y, dimensions1 size, std::string rotation) : Shape(fill, x, y) {
+    this->rotation = rotation;
     setSize(size);
+}
+Triang::Triang(color fill, double x, double y, double w, double h) : Shape(fill, x, y) {
+    dimensions1 _size = {w,h};
+    setSize(_size);
 }
 
 Triang::Triang(double red, double green, double blue, double alpha, point2D center, dimensions1 size) : Shape(red, green, blue, alpha, center) {
@@ -129,21 +134,37 @@ void Triang::changeWidth(double delta) {
 void Triang::changeHeight(double delta) {
     setSize({size.width, size.height + delta});
 }
+bool Triang::isOverlapping(const Shape &s) const {
+    if ((s.getBottomY() > this->getTopY() && s.getTopY() < this->getBottomY() &&
+         s.getRightX() > this->getLeftX() && s.getLeftX() < this->getRightX())) {
+        return true;
+    }
+    // 2. when one is above the other
+    return false;
+}
 
 void Triang::draw() const {
     glColor3f(fill.red, fill.green, fill.blue);
 
     glBegin(GL_TRIANGLES);
         //length of top
+    if (rotation == "none") {
+        glVertex2i(center.x, center.y - size.height / 2);
+        glVertex2i(center.x - size.width / 2, center.y + size.height / 2);
+        glVertex2i(center.x + size.width / 2, center.y + size.height / 2);
+    }
+    if (rotation == "right") {
+        glVertex2i(center.x - size.width / 2, center.y + size.height / 2);
+        glVertex2i(center.x - size.width / 2, center.y - size.height / 2);
+        glVertex2i(center.x + size.width / 2, center.y + size.height / 2);
 
-//    glVertex2i(450, 350);
-//    glVertex2i(250, 550);
-//    glVertex2i(650, 550);
+    }
+    if (rotation == "left") {
+        glVertex2i(center.x - size.width / 2, center.y + size.height / 2);
+        glVertex2i(center.x + size.width / 2, center.y - size.height / 2);
+        glVertex2i(center.x + size.width / 2, center.y + size.height / 2);
+    }
 
-    glVertex2i(center.x,center.y - size.height/2);
-    glVertex2i(center.x -  size.width/2, center.y + size.height/2);
-    glVertex2i(center.x + size.width/2, center.y + size.height/2);
-//    glVertex2i(center.x - size.width/2, center.y + size.height/2);
 
     glEnd();
 

@@ -1,6 +1,7 @@
 #include "graphics.h"
 #include "circle.h"
 #include "rect.h"
+#include "Triang.h"
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -8,6 +9,7 @@ using namespace std;
 
 GLdouble width, height;
 int wd;
+int hailCaught = 0;
 const color skyBlue(77/255.0, 213/255.0, 240/255.0);
 const color grassGreen(26/255.0, 176/255.0, 56/255.0);
 const color white(1, 1, 1);
@@ -18,18 +20,24 @@ const color black(0, 0, 0);
 const color magenta(1, 0, 1);
 const color orange(1, 163/255.0, 22/255.0);
 const color cyan (0, 1, 1);
+const color cloudGrey (190/255.0, 190/255.0, 190/255.0, 1);
 
 vector<unique_ptr<Shape>> clouds;
 Rect grass;
+int endCnt = 0;
+int moveCar = 0;
+int carTimer = 0;
 int clickX, clickY;
 vector<Rect> buildings1;
 vector<Rect> buildings2;
 vector<Rect> buildings3;
 vector<Circle> targets;
-vector<Circle> targetsTemp;
+vector<int> carXpos;
+
 vector<unique_ptr<Shape>> targetsPtr;
 Rect user;
 vector<unique_ptr<Shape>> car;
+vector<unique_ptr<Shape>> startCar;
 
 char gameMode = 'H';
 
@@ -56,6 +64,65 @@ void initCar() {
     car.push_back(make_unique<Rect>(brickRed, 250, 400, carBody));
     car.push_back(make_unique<Circle>(black, 340, 425, 40));
     car.push_back(make_unique<Circle>(black, 160, 425, 40));
+    car.push_back(make_unique<Triang>(brickRed, 389, 355, dimensions1(70,40), "right"));
+    carBody = {285,40};
+    car.push_back(make_unique<Rect>(brickRed, 218, 355, carBody));
+    car.push_back(make_unique<Triang>(white, 285, 310, dimensions1(60,55), "right"));
+    car.push_back(make_unique<Rect>(white, 215, 310, dimensions(85, 55)));
+    car.push_back(make_unique<Triang>(white, 145, 310, dimensions1(60,55),"left"));
+    car.push_back(make_unique<Triang>(brickRed, 95, 310, dimensions1(40, 80), "right"));
+    car.push_back(make_unique<Triang>(brickRed, 80, 270, dimensions1(90, 60), "right"));
+    for (unique_ptr<Shape> &part : car) {
+        carXpos.push_back(part->getCenterX());
+    }
+
+
+
+
+
+
+}
+
+void initClouds() {
+    // Note: the Rect objects that make up the flat bottom of the clouds
+    // won't appear until you implement the Rect::draw method.
+    clouds.clear();
+    dimensions cloudBottom(105, 60);
+    // First cloud
+    int radius = 40;
+    int y = 70;
+    int y2 = 50;
+    int x1 = 50;
+    int x2 = 150;
+    int x3 = 95;
+    int cloudX = 100;
+    clouds.push_back(make_unique<Circle>(cloudGrey, x1, y, radius));
+    clouds.push_back(make_unique<Circle>(cloudGrey, x2, y, radius));
+    clouds.push_back(make_unique<Circle>(cloudGrey, x3, y2, radius));
+    clouds.push_back(make_unique<Rect>(cloudGrey, cloudX, 80, cloudBottom));
+//    // Second cloud
+    int transform = 55;
+    clouds.push_back(make_unique<Circle>(cloudGrey, x1 + transform, y, radius));
+    clouds.push_back(make_unique<Circle>(cloudGrey, x2 + transform, y, radius));
+    clouds.push_back(make_unique<Circle>(cloudGrey, x3 + transform, y2, radius));
+    clouds.push_back(make_unique<Rect>(cloudGrey, cloudX + transform, 80, cloudBottom));
+//    // Third cloud
+    transform = 260;
+    clouds.push_back(make_unique<Circle>(cloudGrey, x1 + transform, y, radius));
+    clouds.push_back(make_unique<Circle>(cloudGrey, x2 + transform, y, radius));
+    clouds.push_back(make_unique<Circle>(cloudGrey, x3 + transform, y2, radius));
+    clouds.push_back(make_unique<Rect>(cloudGrey, cloudX + transform, 80, cloudBottom));
+    transform = 180;
+    clouds.push_back(make_unique<Circle>(cloudGrey, x1 + transform, y + 50, radius));
+    clouds.push_back(make_unique<Circle>(cloudGrey, x2 + transform, y + 50, radius));
+    clouds.push_back(make_unique<Circle>(cloudGrey, x3 + transform, y2 + 50, radius));
+    clouds.push_back(make_unique<Rect>(cloudGrey, cloudX + transform, 80 + 50, cloudBottom));
+
+    transform = 330;
+    clouds.push_back(make_unique<Circle>(cloudGrey, x1 + transform, y, radius));
+    clouds.push_back(make_unique<Circle>(cloudGrey, x2 + transform, y, radius));
+    clouds.push_back(make_unique<Circle>(cloudGrey, x3 + transform, y2, radius));
+    clouds.push_back(make_unique<Rect>(cloudGrey, cloudX + transform, 80, cloudBottom));
 }
 void initUser() {
     // TODO: Initialize the user to be a 20x20 white block
@@ -70,7 +137,7 @@ void init() {
     height = 500;
     clickX = clickY = 0;
     srand(time(0));
-    //initClouds();
+    initClouds();
     initBackground();
     //initBuildings();
     initUser();
@@ -102,9 +169,45 @@ void display() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // DO NOT CHANGE THIS LINE
 
     if (gameMode == 'H') {
+        for (unique_ptr<Shape> &part : car) {
+            part->setCenterX(part->getCenterX() + moveCar);
+            part->draw();
+        }
+        if (carTimer > 50)
+            ++moveCar;
+        string message = "WELCOME TO HAIL STORM";
+        glColor3f(1, 0, 0);
+        glRasterPos2i(90, 150);
+        for (char letter : message) {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
+        }
+
+        ++carTimer;
+
+
+    }
+
+    if (gameMode == 'E') {
+        bool gameOver = true;
+        string message = "GAME OVER";
+        glColor3f(1, 0, 0);
+        glRasterPos2i(175, 190);
+        for (char letter : message) {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
+        }
+        endCnt += 1;
+        if (gameOver && endCnt > 100) {
+            glutDestroyWindow(wd);
+            exit(0);
+        }
+
     }
 
     if (gameMode == 'P') {
+        for (int i = 0; i < car.size(); ++i) {
+            car[i]->setCenterX(carXpos[i]);
+        }
+        carTimer = 0;
         // Draw grass
         int grassHeight = 400;
         glColor3f(0, 1, 0);
@@ -115,6 +218,11 @@ void display() {
         glVertex2i(0, height);\
 
         glEnd();
+
+        // Draw clouds
+        for (unique_ptr<Shape> &s : clouds) {
+            s->draw();
+        }
 
         // Draw car
         for (unique_ptr<Shape> &part : car) {
@@ -143,6 +251,7 @@ void display() {
                     if ((clickX > targets[i].getLeftX() && clickX < targets[i].getRightX() &&
                          clickY > targets[i].getTopY() && clickY < targets[i].getBottomY())) {
                         targets.erase(targets.begin() + i);
+                        ++hailCaught;
                         if (targets.size() == 0)
                             break;
                         targets.push_back(Circle(white, rand() % 400, rand() % 101 + 50, rand() % 15 + 5));
@@ -157,32 +266,30 @@ void display() {
         // Draw user
         user.draw();
 
-        bool gameOver;
+        // Check if hail has hit car
+
         for (Shape &s : targets) {
-            if (s.isOverlapping(grass)) {
-                gameOver = true;
+            for(unique_ptr<Shape> &c : car) {
+                if (s.isOverlapping(*c)) {
+                    gameMode = 'E';
+                }
             }
-        }
-        string message;
-        if (gameOver) {
-            message = "GAME OVER";
-            glColor3f(1, 0, 0);
-            glRasterPos2i(150, 150);
-            for (char letter : message) {
-                glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
-            }
-        }
-        if (gameOver) {
-            glutDestroyWindow(wd);
-            exit(0);
         }
 
-        // D3: What does this code do? What will it look like? Where will it be?
-        message = "You clicked the mouse at coordinate (" + to_string(clickX) + ", " + to_string(clickY) + ")";
-        glColor3f(1, 1, 1);
+
+//        // D3: What does this code do? What will it look like? Where will it be?
+//        string message = "You clicked the mouse at coordinate (" + to_string(clickX) + ", " + to_string(clickY) + ")";
+//        glColor3f(1, 1, 1);
+//        glRasterPos2i(0, height);
+//        for (char letter : message) {
+//            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
+//        }
+
+        string message = "You have caught " + to_string(hailCaught) + " pieces of hail!";
+        glColor3f(0, 0, 0);
         glRasterPos2i(0, height);
         for (char letter : message) {
-            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, letter);
         }
     }
 
@@ -252,8 +359,10 @@ void targetTimer(int dummy) {
 //    for (unique_ptr<Shape> &s : targetsPtr) {
 //
 //    }
-    for (Circle &s : targets) {
-        s.setCenterY(s.getCenterY() + 1);
+    if (gameMode == 'P') {
+        for (Circle &s : targets) {
+            s.setCenterY(s.getCenterY() + 1);
+        }
     }
 
     

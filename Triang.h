@@ -17,6 +17,7 @@ struct dimensions1 {
 
 class Triang : public Shape {
 private:
+    std::string rotation = "right";
     dimensions1 size;
 public:
     Triang();
@@ -36,7 +37,8 @@ public:
     Triang(double red, double green, double blue, double alpha, dimensions1 size);
     Triang(double x, double y, dimensions1 size);
     Triang(double red, double green, double blue, double alpha, double x, double y, dimensions1 size);
-    Triang(color fill, double x, double y, dimensions1 size);
+    Triang(color fill, double x, double y, double w, double h);
+    Triang(color fill, double x, double y, dimensions1 size, std::string rotation);
     Triang(double red, double green, double blue, double alpha, point2D center, dimensions1 size);
 
 
@@ -59,7 +61,7 @@ public:
     void changeWidth(double delta);
     void changeHeight(double delta);
 
-    bool isOverlapping(const Triang &r) const;
+    bool isOverlapping(const Shape &s) const;
 
 
     //Draw
