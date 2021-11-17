@@ -31,6 +31,8 @@ vector<unique_ptr<Shape>> targetsPtr;
 Rect user;
 vector<unique_ptr<Shape>> car;
 
+char gameMode = 'H';
+
 
 
 void initBackground() {
@@ -87,7 +89,7 @@ void initGL() {
 void display() {
     // Tell OpenGL to use the whole window for drawing
     glViewport(0, 0, width, height); // DO NOT CHANGE THIS LINE (unless you are running Catalina on Mac)
-    
+
     // Do an orthographic parallel projection with the coordinate
     // system set to first quadrant, limited by screen/window size
     glMatrixMode(GL_PROJECTION); // DO NOT CHANGE THIS LINE
@@ -96,114 +98,114 @@ void display() {
 
     // Clear the color buffer with current clearing color
     glClear(GL_COLOR_BUFFER_BIT); // DO NOT CHANGE THIS LINE
-    
+
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // DO NOT CHANGE THIS LINE
 
-
-    // Draw grass
-    int grassHeight = 400;
-    glColor3f(0,1,0);
-    glBegin(GL_QUADS);
-    glVertex2i(0, grassHeight);
-    glVertex2i(width, grassHeight);
-    glVertex2i(width, height);
-    glVertex2i(0, height);\
-
-    glEnd();
-
-    // Draw car
-
-    for (unique_ptr<Shape> &part : car) {
-        part->draw();
+    if (gameMode == 'H') {
     }
 
-    for (Circle &target : targets) {
-        target.draw();
-    }
-//    for (unique_ptr<Shape> &t : targetsPtr) {
-//        t->draw();
-//    }
+    if (gameMode == 'P') {
+        // Draw grass
+        int grassHeight = 400;
+        glColor3f(0, 1, 0);
+        glBegin(GL_QUADS);
+        glVertex2i(0, grassHeight);
+        glVertex2i(width, grassHeight);
+        glVertex2i(width, height);
+        glVertex2i(0, height);\
 
-//    for (int i = 0; i < targetsPtr.size(); ++i) {
-//        if (targetsPtr.size() == 0) {
-//            break;
-//        }
-//        if (targetsPtr[i]->isOverlapping(user)) {
-//            targetsPtr[i]->setColor(darkBlue);
-//            //targetsPtr.erase(targetsPtr.begin()+i);
-//        }
-//        else {
-//            targetsPtr[i]->setColor(brickRed);
-//        }
-//        targetsPtr[i]->draw();
-//    }
+        glEnd();
 
-    for (Circle &s : targets) {
-        if (s.isOverlapping(user)) {
-            s.setColor(darkBlue);
+        // Draw car
+        for (unique_ptr<Shape> &part : car) {
+            part->draw();
         }
-        else {
-            s.setColor(brickRed);
-        }
-        s.draw();
-    }
 
-//    targetsTemp.clear();
-    if (targets.size() > 0) {
-        int iterator = targets.size();
-        for (int i = 0; i < iterator; ++i) {
-            if (targets[i].isOverlapping(user)) {
-                targets[i].setColor(brickRed);
-                if ((clickX > targets[i].getLeftX() && clickX < targets[i].getRightX() &&
-                clickY > targets[i].getTopY() && clickY < targets[i].getBottomY())) {
-                    targets.erase(targets.begin() + i);
-                    if (targets.size() == 0)
-                        break;
-                    targets.push_back(Circle(white, rand() % 400, rand() % 101 + 50, rand() % 15 + 5));
-                    --iterator;
-                }
+        for (Circle &target : targets) {
+            target.draw();
+        }
+
+        for (Circle &s : targets) {
+            if (s.isOverlapping(user)) {
+                s.setColor(darkBlue);
             } else {
-                targets[i].setColor(white);
+                s.setColor(brickRed);
             }
-            targets[i].draw();
+            s.draw();
         }
-    }
-    // Draw user
-    user.draw();
 
+        //    targetsTemp.clear();
+        if (targets.size() > 0) {
+            int iterator = targets.size();
+            for (int i = 0; i < iterator; ++i) {
+                if (targets[i].isOverlapping(user)) {
+                    targets[i].setColor(brickRed);
+                    if ((clickX > targets[i].getLeftX() && clickX < targets[i].getRightX() &&
+                         clickY > targets[i].getTopY() && clickY < targets[i].getBottomY())) {
+                        targets.erase(targets.begin() + i);
+                        if (targets.size() == 0)
+                            break;
+                        targets.push_back(Circle(white, rand() % 400, rand() % 101 + 50, rand() % 15 + 5));
+                        --iterator;
+                    }
+                } else {
+                    targets[i].setColor(white);
+                }
+                targets[i].draw();
+            }
+        }
+        // Draw user
+        user.draw();
 
-    // Check if the user is overlapping with the cloud
-    // Only check the Rect object within the cloud
-    for (int i = 0; i < targets.size(); ++i) {
-        if (dynamic_cast<Shape&>(targets[i]).isOverlapping(grass)){
-            string message = "GAME OVER";
-            glColor3f(0, 0, 0);
+        bool gameOver;
+        for (Shape &s : targets) {
+            if (s.isOverlapping(grass)) {
+                gameOver = true;
+            }
+        }
+        string message;
+        if (gameOver) {
+            message = "GAME OVER";
+            glColor3f(1, 0, 0);
             glRasterPos2i(150, 150);
-            cout << "Yes" << endl;
             for (char letter : message) {
                 glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
             }
-            //_sleep(5000);
-            glutDestroyWindow(wd); // put in timer
+        }
+        if (gameOver) {
+            glutDestroyWindow(wd);
             exit(0);
+        }
+
+        // D3: What does this code do? What will it look like? Where will it be?
+        message = "You clicked the mouse at coordinate (" + to_string(clickX) + ", " + to_string(clickY) + ")";
+        glColor3f(1, 1, 1);
+        glRasterPos2i(0, height);
+        for (char letter : message) {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
         }
     }
 
-//    string message = "GAME OVER";
-//    glColor3f(1, 0, 0);
-//    glRasterPos2i(150, 150);
-//    for (char letter : message) {
-//        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
-//    }
     glFlush();  // Render now
 }
 
 // http://www.theasciicode.com.ar/ascii-control-characters/escape-ascii-code-27.html
 void kbd(unsigned char key, int x, int y) {
-    // escape
-    if (key == 27) {
-        glutDestroyWindow(wd);
-        exit(0);
+
+    switch(key) {
+        case 27: {
+            glutDestroyWindow(wd);
+            exit(0);
+        }
+        case 112: {
+            gameMode = 'P';
+            break;
+
+        }
+        case 104: {
+            gameMode = 'H';
+            break;
+        }
     }
     
     glutPostRedisplay();
