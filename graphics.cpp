@@ -29,29 +29,9 @@ vector<Circle> targets;
 vector<Circle> targetsTemp;
 vector<unique_ptr<Shape>> targetsPtr;
 Rect user;
+vector<unique_ptr<Shape>> car;
 
-void initClouds() {
-    // Note: the Rect objects that make up the flat bottom of the clouds
-    // won't appear until you implement the Rect::draw method.
-//    clouds.clear();
-//    dimensions cloudBottom(30, 30);
-//    // First cloud
-//    clouds.push_back(make_unique<Circle>(white, 300, 100, 20));
-//    clouds.push_back(make_unique<Circle>(white, 330, 100, 20));
-//    clouds.push_back(make_unique<Circle>(white, 320, 90, 20));
-//    clouds.push_back(make_unique<Rect>(white, 315, 105, cloudBottom));
-//    // Second cloud
-//    clouds.push_back(make_unique<Circle>(white, 100, 80, 20));
-//    clouds.push_back(make_unique<Circle>(white, 130, 80, 20));
-//    clouds.push_back(make_unique<Circle>(white, 120, 70, 20));
-//    clouds.push_back(make_unique<Rect>(white, 115, 85, cloudBottom));
-//    // Third cloud
-//    clouds.push_back(make_unique<Circle>(white, 450, 50, 20));
-//    clouds.push_back(make_unique<Circle>(white, 480, 50, 20));
-//    clouds.push_back(make_unique<Circle>(white, 470, 40, 20));
-//    clouds.push_back(make_unique<Rect>(white, 465, 55, cloudBottom));
 
-}
 
 void initBackground() {
     grass.setCenter(250, 450);
@@ -69,7 +49,11 @@ void initTargets() {
 
 }
 
-void initBuildings() {
+void initCar() {
+    dimensions carBody(350,50);
+    car.push_back(make_unique<Rect>(brickRed, 250, 400, carBody));
+    car.push_back(make_unique<Circle>(black, 340, 425, 40));
+    car.push_back(make_unique<Circle>(black, 160, 425, 40));
 }
 void initUser() {
     // TODO: Initialize the user to be a 20x20 white block
@@ -84,10 +68,11 @@ void init() {
     height = 500;
     clickX = clickY = 0;
     srand(time(0));
-    initClouds();
+    //initClouds();
     initBackground();
-    initBuildings();
+    //initBuildings();
     initUser();
+    initCar();
     initTargets();
 }
 
@@ -125,6 +110,12 @@ void display() {
     glVertex2i(0, height);\
 
     glEnd();
+
+    // Draw car
+
+    for (unique_ptr<Shape> &part : car) {
+        part->draw();
+    }
 
     for (Circle &target : targets) {
         target.draw();
