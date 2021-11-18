@@ -20,18 +20,21 @@ const color black(0, 0, 0);
 const color magenta(1, 0, 1);
 const color orange(1, 163/255.0, 22/255.0);
 const color cyan (0, 1, 1);
-const color cloudGrey (190/255.0, 190/255.0, 190/255.0, 1);
+const color cloudGrey (100/255.0, 100/255.0, 100/255.0, 1);
+const color yellow (1,1,0,1);
 
 vector<unique_ptr<Shape>> clouds;
 Rect grass;
 int endCnt = 0;
 int moveCar = 0;
 int carTimer = 0;
+int lightningTimer = 0;
+int tempLightning;
+int hailSpeed = 0;
 int clickX, clickY;
 int level = 1;
-vector<Rect> buildings1;
-vector<Rect> buildings2;
-vector<Rect> buildings3;
+bool inLevel = false;
+vector<Triang> lightning;
 vector<Circle> targets;
 vector<int> carXpos;
 vector<int> levels{2,3,4,5};
@@ -61,6 +64,21 @@ void initTargets() {
 
 }
 
+void initLightning() {
+    lightning.push_back(Triang(yellow, 79,145, dimensions1(10, 70), "down"));
+    lightning.push_back(Triang(yellow, 73,182, dimensions1(10, 70), "down"));
+
+    lightning.push_back(Triang(yellow, 272,190, dimensions1(8, 60), "down"));
+    lightning.push_back(Triang(yellow, 277,217, dimensions1(10, 70), "down"));
+
+    lightning.push_back(Triang(yellow, 436,150, dimensions1(11, 80), "down"));
+    lightning.push_back(Triang(yellow, 430,188, dimensions1(10, 70), "down"));
+
+//    lightning.push_back(Triang(yellow, 500,150, dimensions1(11, 80), "down"));
+//    lightning.push_back(Triang(yellow, 500,188, dimensions1(10, 70), "down"));
+
+}
+
 void initCar() {
     dimensions carBody(350,50);
     car.push_back(make_unique<Rect>(brickRed, 250, 400, carBody));
@@ -77,11 +95,6 @@ void initCar() {
     for (unique_ptr<Shape> &part : car) {
         carXpos.push_back(part->getCenterX());
     }
-
-
-
-
-
 
 }
 
@@ -145,12 +158,13 @@ void init() {
     initUser();
     initCar();
     initTargets();
+    initLightning();
 }
 
 /* Initialize OpenGL Graphics */
 void initGL() {
     // Set "clearing" or background color
-    glClearColor(skyBlue.red, skyBlue.green, skyBlue.blue, 1.0f);
+    glClearColor(0, 0, 0, 1.0f);
 }
 
 /* Handler for window-repaint event. Call back when the window first appears and
@@ -190,6 +204,7 @@ void display() {
     }
 
     if (gameMode == 'E') {
+        glClearColor(0, 0, 0, 1.0f);
         bool gameOver = true;
         string message = "GAME OVER";
         glColor3f(1, 0, 0);
@@ -224,6 +239,13 @@ void display() {
         // Draw clouds
         for (unique_ptr<Shape> &s : clouds) {
             s->draw();
+        }
+
+            // Draw Lightning
+        if (rand() % 35 == 12){
+            for (int i = 0; i < rand() % lightning.size(); ++i) {
+                lightning[rand() % lightning.size()].draw();
+            }
         }
 
         // Draw car
@@ -269,7 +291,6 @@ void display() {
         user.draw();
 
         // Check if hail has hit car
-
         for (Shape &s : targets) {
             for(unique_ptr<Shape> &c : car) {
                 if (s.isOverlapping(*c)) {
@@ -284,18 +305,24 @@ void display() {
         for (char letter : message) {
             glutBitmapCharacter(GLUT_BITMAP_8_BY_13, letter);
         }
-//        if (hailCaught != 0 && hailCaught % 25 == 0) {
-//            level = levels[0];
-//            levels.erase(levels.begin());
-//
-//        }
-        message = "LEVEL:  " + to_string(level);
+
+
+        }
+        ++lightningTimer;
+        string message = "LEVEL:  " + to_string(level);
         glColor3f(0, 0, 0);
         glRasterPos2i(0, height);
         for (char letter : message) {
             glutBitmapCharacter(GLUT_BITMAP_9_BY_15, letter);
         }
-    }
+//        message = "You clicked the mouse at coordinate (" + to_string(clickX) + ", " + to_string(clickY) + ")";
+//        glColor3f(1, 1, 1);
+//        glRasterPos2i(0, height);
+//        for (char letter : message) {
+//            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
+//        }
+
+
 
     glFlush();  // Render now
 }
@@ -310,6 +337,7 @@ void kbd(unsigned char key, int x, int y) {
         }
         case 112: {
             gameMode = 'P';
+            glClearColor(190/255.0, 190/255.0, 190/255.0,1);
             break;
 
         }
@@ -365,53 +393,13 @@ void targetTimer(int dummy) {
 //    }
     if (gameMode == 'P') {
         for (Circle &s : targets) {
-            s.setCenterY(s.getCenterY() + 1);
+            s.setCenterY(s.getCenterY() + hailSpeed);
         }
     }
 
     
     glutPostRedisplay();
     glutTimerFunc(50, targetTimer, dummy);
-}
-
-void buildingTimer(int dummy) {
-    // TODO: Make the other two vectors of buildings move.
-    // The larger the buildings, the slower they should move.
-
-    for (int i = 0; i < buildings1.size(); ++i) {
-        // Move all the red buildings to the left
-        buildings1[i].moveX(-3);
-        // If a shape has moved off the screen
-        if (buildings1[i].getCenterX() < -(buildings1[i].getWidth()/2)) {
-            // Set it to the right of the screen so that it passes through again
-            int buildingOnLeft = (i == 0) ? buildings1.size()-1 : i - 1;
-            buildings1[i].setCenterX(buildings1[buildingOnLeft].getCenterX() + buildings1[buildingOnLeft].getWidth()/2 + buildings1[i].getWidth()/2 + 5);
-        }
-    }
-    for (int i = 0; i < buildings2.size(); ++i) {
-        // Move all the blue buildings to the left
-        buildings2[i].moveX(-2);
-        // If a shape has moved off the screen
-        if (buildings2[i].getCenterX() < -(buildings2[i].getWidth()/2)) {
-            // Set it to the right of the screen so that it passes through again
-            int buildingOnLeft = (i == 0) ? buildings2.size()-1 : i - 1;
-            buildings2[i].setCenterX(buildings2[buildingOnLeft].getCenterX() + buildings2[buildingOnLeft].getWidth()/2 + buildings2[i].getWidth()/2 + 5);
-        }
-    }
-    for (int i = 0; i < buildings3.size(); ++i) {
-        // Move all the purple buildings to the left
-        buildings3[i].moveX(-1);
-        // If a shape has moved off the screen
-        if (buildings3[i].getCenterX() < -(buildings3[i].getWidth()/2)) {
-            // Set it to the right of the screen so that it passes through again
-            int buildingOnLeft = (i == 0) ? buildings3.size()-1 : i - 1;
-            buildings3[i].setCenterX(buildings3[buildingOnLeft].getCenterX() + buildings3[buildingOnLeft].getWidth()/2 + buildings3[i].getWidth()/2 + 5);
-        }
-    }
-
-
-    glutPostRedisplay();
-    glutTimerFunc(30, buildingTimer, dummy);
 }
 
 /* Main function: GLUT runs as a console application starting at main()  */
@@ -449,7 +437,6 @@ int main(int argc, char** argv) {
     
     // handles timer
     glutTimerFunc(0, targetTimer, 0);
-    glutTimerFunc(0, buildingTimer, 0);
     
     // Enter the event-processing loop
     glutMainLoop();

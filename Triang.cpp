@@ -165,6 +165,12 @@ void Triang::draw() const {
         glVertex2i(center.x + size.width / 2, center.y + size.height / 2);
     }
 
+    if (rotation == "down") {
+        glVertex2i(center.x - size.width / 2, center.y - size.height / 2);
+        glVertex2i(center.x + size.width / 2, center.y - size.height / 2);
+        glVertex2i(center.x, center.y + size.height / 2);
+    }
+
 
     glEnd();
 
