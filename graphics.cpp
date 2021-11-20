@@ -22,6 +22,7 @@ const color orange(1, 163/255.0, 22/255.0);
 const color cyan (0, 1, 1);
 const color cloudGrey (100/255.0, 100/255.0, 100/255.0, 1);
 const color yellow (1,1,0,1);
+const color asphault (91/255.0, 92/255.0, 88/255.0, 1);
 
 vector<unique_ptr<Shape>> clouds;
 Rect grass;
@@ -30,10 +31,12 @@ int moveCar = 0;
 int carTimer = 0;
 int lightningTimer = 0;
 int tempLightning;
-int hailSpeed = 0;
+int hailSpeed = 1;
 int clickX, clickY;
+int levelTimer = 0;
 int level = 1;
 bool inLevel = false;
+vector<Rect> road;
 vector<Triang> lightning;
 vector<Circle> targets;
 vector<int> carXpos;
@@ -98,6 +101,22 @@ void initCar() {
 
 }
 
+void initRoad() {
+    // Draw grass
+//    int roadHeight = 400;
+//    glColor3f(91/255.0, 92/255.0, 88/255.0);
+//    glBegin(GL_QUADS);
+//    glVertex2i(0, grassHeight);
+//    glVertex2i(width, grassHeight);
+//    glVertex2i(width, height);
+//    glVertex2i(0, height);
+    road.push_back(Rect(asphault, width/2, 600, dimensions(width, 400)));
+    road.push_back(Rect(yellow, 50, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 200, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 350, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 500, 450, dimensions(100, 20)));
+}
+
 void initClouds() {
     // Note: the Rect objects that make up the flat bottom of the clouds
     // won't appear until you implement the Rect::draw method.
@@ -154,7 +173,7 @@ void init() {
     srand(time(0));
     initClouds();
     initBackground();
-    //initBuildings();
+    initRoad();
     initUser();
     initCar();
     initTargets();
@@ -185,6 +204,11 @@ void display() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // DO NOT CHANGE THIS LINE
 
     if (gameMode == 'H') {
+        // Draw road
+        for (Rect &r : road) {
+            r.draw();
+        }
+        // Draw car
         for (unique_ptr<Shape> &part : car) {
             part->setCenterX(part->getCenterX() + moveCar);
             part->draw();
@@ -225,16 +249,10 @@ void display() {
             car[i]->setCenterX(carXpos[i]);
         }
         carTimer = 0;
-        // Draw grass
-        int grassHeight = 400;
-        glColor3f(0, 1, 0);
-        glBegin(GL_QUADS);
-        glVertex2i(0, grassHeight);
-        glVertex2i(width, grassHeight);
-        glVertex2i(width, height);
-        glVertex2i(0, height);\
-
-        glEnd();
+        // Draw road
+        for (Rect &r : road) {
+            r.draw();
+        }
 
         // Draw clouds
         for (unique_ptr<Shape> &s : clouds) {
@@ -305,11 +323,13 @@ void display() {
         for (char letter : message) {
             glutBitmapCharacter(GLUT_BITMAP_8_BY_13, letter);
         }
-
+        tempLightning = hailCaught;
+        if (hailCaught != 0 && hailCaught % 25 == 0) {
+            ++level;
 
         }
         ++lightningTimer;
-        string message = "LEVEL:  " + to_string(level);
+        message = "LEVEL:  " + to_string(level);
         glColor3f(0, 0, 0);
         glRasterPos2i(0, height);
         for (char letter : message) {
@@ -322,7 +342,7 @@ void display() {
 //            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
 //        }
 
-
+    }
 
     glFlush();  // Render now
 }
@@ -385,12 +405,14 @@ void mouse(int button, int state, int x, int y) {
     glutPostRedisplay();
 }
 
+void levelTime(int dummy) {
+    ++level;
+    glutPostRedisplay();
+    glutTimerFunc(20000, levelTime, dummy);
+}
 
 void targetTimer(int dummy) {
 
-//    for (unique_ptr<Shape> &s : targetsPtr) {
-//
-//    }
     if (gameMode == 'P') {
         for (Circle &s : targets) {
             s.setCenterY(s.getCenterY() + hailSpeed);
@@ -437,6 +459,7 @@ int main(int argc, char** argv) {
     
     // handles timer
     glutTimerFunc(0, targetTimer, 0);
+    glutTimerFunc(20000, levelTime, 0);
     
     // Enter the event-processing loop
     glutMainLoop();
