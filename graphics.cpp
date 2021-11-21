@@ -4,6 +4,7 @@
 #include "Triang.h"
 #include <iostream>
 #include <memory>
+#include <ctime>
 #include <vector>
 using namespace std;
 
@@ -31,21 +32,21 @@ int moveCar = 0;
 int carTimer = 0;
 int lightningTimer = 0;
 int tempLightning;
-int hailSpeed = 1;
+double hailSpeed = 0;
 int clickX, clickY;
 int levelTimer = 0;
-int level = 1;
-bool inLevel = false;
+int level = 5;
+bool driveAway = false;
+time_t startTime;
 vector<Rect> road;
 vector<Triang> lightning;
 vector<Circle> targets;
 vector<int> carXpos;
-vector<int> levels{2,3,4,5};
+
 
 vector<unique_ptr<Shape>> targetsPtr;
 Rect user;
 vector<unique_ptr<Shape>> car;
-vector<unique_ptr<Shape>> startCar;
 
 char gameMode = 'H';
 
@@ -77,9 +78,6 @@ void initLightning() {
     lightning.push_back(Triang(yellow, 436,150, dimensions1(11, 80), "down"));
     lightning.push_back(Triang(yellow, 430,188, dimensions1(10, 70), "down"));
 
-//    lightning.push_back(Triang(yellow, 500,150, dimensions1(11, 80), "down"));
-//    lightning.push_back(Triang(yellow, 500,188, dimensions1(10, 70), "down"));
-
 }
 
 void initCar() {
@@ -102,24 +100,23 @@ void initCar() {
 }
 
 void initRoad() {
-    // Draw grass
-//    int roadHeight = 400;
-//    glColor3f(91/255.0, 92/255.0, 88/255.0);
-//    glBegin(GL_QUADS);
-//    glVertex2i(0, grassHeight);
-//    glVertex2i(width, grassHeight);
-//    glVertex2i(width, height);
-//    glVertex2i(0, height);
     road.push_back(Rect(asphault, width/2, 600, dimensions(width, 400)));
     road.push_back(Rect(yellow, 50, 450, dimensions(100, 20)));
     road.push_back(Rect(yellow, 200, 450, dimensions(100, 20)));
     road.push_back(Rect(yellow, 350, 450, dimensions(100, 20)));
     road.push_back(Rect(yellow, 500, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 650, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 800, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 950, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 1100, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 1250, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 1400, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 1550, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 1700, 450, dimensions(100, 20)));
+    road.push_back(Rect(yellow, 1850, 450, dimensions(100, 20)));
 }
 
 void initClouds() {
-    // Note: the Rect objects that make up the flat bottom of the clouds
-    // won't appear until you implement the Rect::draw method.
     clouds.clear();
     dimensions cloudBottom(105, 60);
     // First cloud
@@ -159,7 +156,6 @@ void initClouds() {
     clouds.push_back(make_unique<Rect>(cloudGrey, cloudX + transform, 80, cloudBottom));
 }
 void initUser() {
-    // TODO: Initialize the user to be a 20x20 white block
     // centered in the top left corner of the graphics window
     user.setSize(5,5);
     user.setColor(0,0,0,1);
@@ -178,6 +174,8 @@ void init() {
     initCar();
     initTargets();
     initLightning();
+    startTime = time(0);
+
 }
 
 /* Initialize OpenGL Graphics */
@@ -215,6 +213,17 @@ void display() {
         }
         if (carTimer > 50)
             ++moveCar;
+
+        if (carTimer > 50) {
+            if (carTimer % 25 != 0 && carTimer % 25 != 1) {
+                string message = "PRESS p TO PLAY";
+                glColor3f(1, 0, 0);
+                glRasterPos2i(180, 225);
+                for (char letter : message) {
+                    glutBitmapCharacter(GLUT_BITMAP_8_BY_13, letter);
+                }
+            }
+        }
         string message = "WELCOME TO HAIL STORM";
         glColor3f(1, 0, 0);
         glRasterPos2i(90, 150);
@@ -223,8 +232,33 @@ void display() {
         }
 
         ++carTimer;
+    }
+    if (gameMode == 'W') {
+        glClearColor(135/255.0, 206/255.0, 235/255.0, 1.0f);
+        ++moveCar;
+        // Draw road
+        for (int i = 0; i < road.size(); ++i) {
+            if (driveAway) {
+                if (i > 0)
+                    road[i].setCenterX(road[i].getCenterX() - moveCar);
+                if (road[road.size()-1].getRightX() < width)
+                    gameMode = 'E';
+            }
+            road[i].draw();
+        }
+        // Draw car
+        for (unique_ptr<Shape> &part : car) {
+            part->setCenterX(part->getCenterX() + moveCar);
+            part->draw();
+        }
+        string message = "YOU WIN!!!";
+        glColor3f(1, 0, 0);
+        glRasterPos2i(90, 150);
+        for (char letter : message) {
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
+        }
 
-
+        ++carTimer;
     }
 
     if (gameMode == 'E') {
@@ -244,32 +278,82 @@ void display() {
 
     }
 
-    if (gameMode == 'P') {
-        for (int i = 0; i < car.size(); ++i) {
-            car[i]->setCenterX(carXpos[i]);
+    if (gameMode == 'P'){
+
+        if (!driveAway) {
+            for (int i = 0; i < car.size(); ++i) {
+                car[i]->setCenterX(carXpos[i]);
+            }
         }
-        carTimer = 0;
-        // Draw road
-        for (Rect &r : road) {
-            r.draw();
+        if (level == 1) {
+            hailSpeed = .75;
+        }
+        else if (level == 2) {
+            hailSpeed = 1;
+        }
+        else if (level == 3) {
+            hailSpeed = 1.15;
+        }
+        else if (level == 4) {
+            hailSpeed = 1.25;
+        }
+        else if (level == 5) {
+            hailSpeed = 0;
+        }
+        else if (level == 6) {
+            hailSpeed = 0;
+            // Draw car
+            driveAway = true;
+        }
+
+
+//        // Draw road
+//        for (Rect &r : road) {
+//            if (driveAway)
+//                r.setCenterX(r.getCenterX() - moveCar);
+//            r.draw();
+//        }
+//
+        for (int i = 0; i < road.size(); ++i) {
+            if (driveAway) {
+                if (i > 0)
+                    road[i].setCenterX(road[i].getCenterX() - moveCar);
+                if (road[road.size()-1].getRightX() < width)
+                    moveCar = 0;
+                    gameMode = 'W';
+            }
+            road[i].draw();
         }
 
         // Draw clouds
         for (unique_ptr<Shape> &s : clouds) {
+            if (driveAway)
+                s->setCenterX(s->getCenterX() - moveCar);
             s->draw();
         }
 
             // Draw Lightning
-        if (rand() % 35 == 12){
-            for (int i = 0; i < rand() % lightning.size(); ++i) {
-                lightning[rand() % lightning.size()].draw();
+        if (!driveAway) {
+            if (rand() % 35 == 12) {
+                for (int i = 0; i < rand() % lightning.size(); ++i) {
+                    lightning[rand() % lightning.size()].draw();
+                }
             }
         }
+        if (driveAway)
+            ++carTimer;
 
         // Draw car
         for (unique_ptr<Shape> &part : car) {
+            if (moveCar)
+                part->setCenterX(part->getCenterX() + moveCar);
+            else
+                part->setCenterX(part->getCenterX() + moveCar);
             part->draw();
         }
+        if (carTimer > 50)
+            ++moveCar;
+
 
         for (Circle &target : targets) {
             target.draw();
@@ -311,7 +395,7 @@ void display() {
         // Check if hail has hit car
         for (Shape &s : targets) {
             for(unique_ptr<Shape> &c : car) {
-                if (s.isOverlapping(*c)) {
+                if (c->isOverlapping(s)) {
                     gameMode = 'E';
                 }
             }
@@ -324,10 +408,6 @@ void display() {
             glutBitmapCharacter(GLUT_BITMAP_8_BY_13, letter);
         }
         tempLightning = hailCaught;
-        if (hailCaught != 0 && hailCaught % 25 == 0) {
-            ++level;
-
-        }
         ++lightningTimer;
         message = "LEVEL:  " + to_string(level);
         glColor3f(0, 0, 0);
@@ -335,13 +415,6 @@ void display() {
         for (char letter : message) {
             glutBitmapCharacter(GLUT_BITMAP_9_BY_15, letter);
         }
-//        message = "You clicked the mouse at coordinate (" + to_string(clickX) + ", " + to_string(clickY) + ")";
-//        glColor3f(1, 1, 1);
-//        glRasterPos2i(0, height);
-//        for (char letter : message) {
-//            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, letter);
-//        }
-
     }
 
     glFlush();  // Render now
@@ -358,6 +431,8 @@ void kbd(unsigned char key, int x, int y) {
         case 112: {
             gameMode = 'P';
             glClearColor(190/255.0, 190/255.0, 190/255.0,1);
+            moveCar = 0;
+            carTimer = 0;
             break;
 
         }
@@ -390,7 +465,6 @@ void kbdS(int key, int x, int y) {
 }
 
 void cursor(int x, int y) {
-    // TODO: Set the user's center point to be the coordinates
     user.setCenter(x,y);
     // passed in as parameters to this function. This will make
     // the user block move with the mouse.
@@ -418,11 +492,23 @@ void targetTimer(int dummy) {
             s.setCenterY(s.getCenterY() + hailSpeed);
         }
     }
-
-    
     glutPostRedisplay();
     glutTimerFunc(50, targetTimer, dummy);
 }
+
+void driveAwayTimer(int dummy) {
+    if (driveAway) {
+        for (unique_ptr<Shape> &part : car) {
+            part->setCenterX(part->getCenterX() + moveCar);
+            if (part->getCenterX() + moveCar > width + 50)
+                driveAway = false;
+        }
+        ++moveCar;
+        glutTimerFunc(0, driveAwayTimer, dummy);
+
+    }
+}
+
 
 /* Main function: GLUT runs as a console application starting at main()  */
 int main(int argc, char** argv) {
@@ -460,6 +546,7 @@ int main(int argc, char** argv) {
     // handles timer
     glutTimerFunc(0, targetTimer, 0);
     glutTimerFunc(20000, levelTime, 0);
+    glutTimerFunc(0, driveAwayTimer, 0);
     
     // Enter the event-processing loop
     glutMainLoop();
