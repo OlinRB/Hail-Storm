@@ -8,9 +8,30 @@
 #include <vector>
 using namespace std;
 
-GLdouble width, height;
-int wd;
-int hailCaught = 0;
+
+/**
+ * HAIL STORM
+ *
+ * This game is generated using OpenGL and GLUT
+ *
+ * The objective is to not let the hail hit the
+ * racecar. The user must hover over the hail
+ * and click the left button to catch it.
+ * Hovering over the hail will change the
+ * hail color to red to indicate a correct
+ * hover.
+ *
+ * If the user survives 5 rounds, the car
+ * drives away from the storm.
+ *
+ *
+ *
+ */
+
+
+/**
+ * COLORS
+ */
 const color skyBlue(77/255.0, 213/255.0, 240/255.0);
 const color grassGreen(26/255.0, 176/255.0, 56/255.0);
 const color white(1, 1, 1);
@@ -25,19 +46,25 @@ const color cloudGrey (100/255.0, 100/255.0, 100/255.0, 1);
 const color yellow (1,1,0,1);
 const color asphault (91/255.0, 92/255.0, 88/255.0, 1);
 
+/**
+ * GLOBAL GAME VARIABLES
+ */
+GLdouble width, height;
+int wd;
+int hailCaught = 0;
 vector<unique_ptr<Shape>> clouds;
-Rect grass;
+//Rect grass;
 int endCnt = 0;
 int moveCar = 0;
 int carTimer = 0;
 int lightningTimer = 0;
-int tempLightning;
+//int tempLightning;
 double hailSpeed = 0;
 int clickX, clickY;
-int levelTimer = 0;
-int level = 5;
+//int levelTimer = 0;
+int level = 1;
 bool driveAway = false;
-time_t startTime;
+//time_t startTime;
 vector<Rect> road;
 vector<Triang> lightning;
 vector<Circle> targets;
@@ -53,22 +80,18 @@ char gameMode = 'H';
 
 
 void initBackground() {
-    grass.setCenter(250, 450);
-    grass.setSize(width, height/3);
-    grass.setColor(grassGreen);
 }
 
 void initTargets() {
+    // Add hail
     for (int i = 0; i < 5; ++i) {
         targets.push_back(Circle(white, rand() % 400, rand() % 101+50, rand() % 15 + 5));
-    }
-    for (int i = 0; i < 5; ++i) {
-        targetsPtr.push_back(make_unique<Circle>(white, rand() % 400, rand() % 400, rand() % 30 + 15));
     }
 
 }
 
 void initLightning() {
+    // Add lightning
     lightning.push_back(Triang(yellow, 79,145, dimensions1(10, 70), "down"));
     lightning.push_back(Triang(yellow, 73,182, dimensions1(10, 70), "down"));
 
@@ -81,6 +104,7 @@ void initLightning() {
 }
 
 void initCar() {
+    // Create car
     dimensions carBody(350,50);
     car.push_back(make_unique<Rect>(brickRed, 250, 400, carBody));
     car.push_back(make_unique<Circle>(black, 340, 425, 40));
@@ -100,6 +124,7 @@ void initCar() {
 }
 
 void initRoad() {
+    // Create road
     road.push_back(Rect(asphault, width/2, 600, dimensions(width, 400)));
     road.push_back(Rect(yellow, 50, 450, dimensions(100, 20)));
     road.push_back(Rect(yellow, 200, 450, dimensions(100, 20)));
@@ -117,9 +142,9 @@ void initRoad() {
 }
 
 void initClouds() {
+    // Create clouds
     clouds.clear();
     dimensions cloudBottom(105, 60);
-    // First cloud
     int radius = 40;
     int y = 70;
     int y2 = 50;
@@ -131,13 +156,13 @@ void initClouds() {
     clouds.push_back(make_unique<Circle>(cloudGrey, x2, y, radius));
     clouds.push_back(make_unique<Circle>(cloudGrey, x3, y2, radius));
     clouds.push_back(make_unique<Rect>(cloudGrey, cloudX, 80, cloudBottom));
-//    // Second cloud
+
     int transform = 55;
     clouds.push_back(make_unique<Circle>(cloudGrey, x1 + transform, y, radius));
     clouds.push_back(make_unique<Circle>(cloudGrey, x2 + transform, y, radius));
     clouds.push_back(make_unique<Circle>(cloudGrey, x3 + transform, y2, radius));
     clouds.push_back(make_unique<Rect>(cloudGrey, cloudX + transform, 80, cloudBottom));
-//    // Third cloud
+
     transform = 260;
     clouds.push_back(make_unique<Circle>(cloudGrey, x1 + transform, y, radius));
     clouds.push_back(make_unique<Circle>(cloudGrey, x2 + transform, y, radius));
@@ -174,7 +199,7 @@ void init() {
     initCar();
     initTargets();
     initLightning();
-    startTime = time(0);
+    //startTime = time(0);
 
 }
 
@@ -201,6 +226,7 @@ void display() {
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // DO NOT CHANGE THIS LINE
 
+    // HOME SCREEN
     if (gameMode == 'H') {
         // Draw road
         for (Rect &r : road) {
@@ -233,6 +259,7 @@ void display() {
 
         ++carTimer;
     }
+    // WIN SCREEN
     if (gameMode == 'W') {
         glClearColor(135/255.0, 206/255.0, 235/255.0, 1.0f);
         ++moveCar;
@@ -260,7 +287,7 @@ void display() {
 
         ++carTimer;
     }
-
+    // END SCREEN
     if (gameMode == 'E') {
         glClearColor(0, 0, 0, 1.0f);
         bool gameOver = true;
@@ -277,7 +304,7 @@ void display() {
         }
 
     }
-
+    // PLAY SCREEN
     if (gameMode == 'P'){
 
         if (!driveAway) {
@@ -298,7 +325,7 @@ void display() {
             hailSpeed = 1.25;
         }
         else if (level == 5) {
-            hailSpeed = 0;
+            hailSpeed = 1.5;
         }
         else if (level == 6) {
             hailSpeed = 0;
@@ -306,14 +333,7 @@ void display() {
             driveAway = true;
         }
 
-
-//        // Draw road
-//        for (Rect &r : road) {
-//            if (driveAway)
-//                r.setCenterX(r.getCenterX() - moveCar);
-//            r.draw();
-//        }
-//
+        // Draw road
         for (int i = 0; i < road.size(); ++i) {
             if (driveAway) {
                 if (i > 0)
@@ -332,7 +352,7 @@ void display() {
             s->draw();
         }
 
-            // Draw Lightning
+        // Draw Lightning
         if (!driveAway) {
             if (rand() % 35 == 12) {
                 for (int i = 0; i < rand() % lightning.size(); ++i) {
@@ -354,11 +374,6 @@ void display() {
         if (carTimer > 50)
             ++moveCar;
 
-
-        for (Circle &target : targets) {
-            target.draw();
-        }
-
         for (Circle &s : targets) {
             if (s.isOverlapping(user)) {
                 s.setColor(darkBlue);
@@ -368,7 +383,7 @@ void display() {
             s.draw();
         }
 
-        //    targetsTemp.clear();
+        // Check if user catches hail
         if (targets.size() > 0) {
             int iterator = targets.size();
             for (int i = 0; i < iterator; ++i) {
@@ -400,14 +415,14 @@ void display() {
                 }
             }
         }
-
+        // Display hail caught
         string message = "You have caught " + to_string(hailCaught) + " pieces of hail!";
         glColor3f(0, 0, 0);
         glRasterPos2i(0, 10);
         for (char letter : message) {
             glutBitmapCharacter(GLUT_BITMAP_8_BY_13, letter);
         }
-        tempLightning = hailCaught;
+        // Display level
         ++lightningTimer;
         message = "LEVEL:  " + to_string(level);
         glColor3f(0, 0, 0);
@@ -486,7 +501,7 @@ void levelTime(int dummy) {
 }
 
 void targetTimer(int dummy) {
-
+    // Move hail downwards
     if (gameMode == 'P') {
         for (Circle &s : targets) {
             s.setCenterY(s.getCenterY() + hailSpeed);
