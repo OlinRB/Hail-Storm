@@ -53,25 +53,20 @@ GLdouble width, height;
 int wd;
 int hailCaught = 0;
 vector<unique_ptr<Shape>> clouds;
-//Rect grass;
 int endCnt = 0;
 int moveCar = 0;
 int carTimer = 0;
 int lightningTimer = 0;
-//int tempLightning;
 double hailSpeed = 0;
 int clickX, clickY;
-//int levelTimer = 0;
 int level = 1;
 bool driveAway = false;
-//time_t startTime;
 vector<Rect> road;
 vector<Triang> lightning;
 vector<Circle> targets;
 vector<int> carXpos;
 
 
-vector<unique_ptr<Shape>> targetsPtr;
 Rect user;
 vector<unique_ptr<Shape>> car;
 
@@ -312,6 +307,7 @@ void display() {
                 car[i]->setCenterX(carXpos[i]);
             }
         }
+        // Set hail speed
         if (level == 1) {
             hailSpeed = .75;
         }
@@ -453,6 +449,8 @@ void kbd(unsigned char key, int x, int y) {
         }
         case 104: {
             gameMode = 'H';
+            glClearColor(0, 0, 0, 1.0f);
+            level = 1;
             break;
         }
     }
